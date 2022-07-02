@@ -12,6 +12,11 @@ require "sentry/interfaces/stacktrace_builder"
 
 module Sentry
   class Configuration
+    class Experiments
+      # Allow sending custom measurements in transaction data.
+      attr_accessor :custom_measurements
+    end
+
     include CustomInspection
     include LoggingHelper
     # Directories to be recognized as part of your app. e.g. if you
@@ -121,6 +126,10 @@ module Sentry
     # You should probably append to this rather than overwrite it.
     # @return [Array<String>]
     attr_accessor :excluded_exceptions
+
+    # An Experiments object that contains configuration options for experimental features.
+    # @return [Experiments]
+    attr_reader :experiments
 
     # Boolean to check nested exceptions when deciding if to exclude. Defaults to true
     # @return [Boolean]
@@ -276,6 +285,7 @@ module Sentry
       self.traces_sampler = nil
 
       @transport = Transport::Configuration.new
+      @experiments = Experiments.new
       @gem_specs = Hash[Gem::Specification.map { |spec| [spec.name, spec.version.to_s] }] if Gem::Specification.respond_to?(:map)
 
       run_post_initialization_callbacks

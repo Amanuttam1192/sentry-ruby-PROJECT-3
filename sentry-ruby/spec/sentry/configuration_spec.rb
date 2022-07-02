@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 RSpec.describe Sentry::Configuration do
+  describe "#experiments" do
+    it "returns Configuration::Experiments" do
+      expect(subject.experiments).to be_a(Sentry::Configuration::Experiments)
+    end
+
+    describe "#custom_measurements" do
+      it do
+        expect(subject.experiments.custom_measurements).to eq(nil)
+        subject.experiments.custom_measurements = true
+        expect(subject.experiments.custom_measurements).to eq(true)
+      end
+    end
+  end
+
   describe "#csp_report_uri" do
     it "returns nil if the dsn is not present" do
       expect(subject.csp_report_uri).to eq(nil)
