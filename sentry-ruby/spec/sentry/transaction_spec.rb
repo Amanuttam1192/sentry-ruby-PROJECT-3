@@ -121,6 +121,50 @@ RSpec.describe Sentry::Transaction do
     end
   end
 
+  describe "#set_measurement" do
+    context "when config.experiments.custom_measurements = false" do
+      let(:string_io) { StringIO.new }
+
+      before { Sentry.configuration.logger = Logger.new(string_io) }
+
+      it "logs the warning message" do
+        subject.set_measurement("metric.foo", 0.1, "second")
+
+        expect(string_io.string).to include("[Tracing] Experimental custom_measurements feature is disabled")
+      end
+    end
+
+    context "when config.experiments.custom_measurements = true" do
+      before do
+        Sentry.configuration.experiments.custom_measurements = true
+      end
+
+      it "sets the measurement" do
+        subject.set_measurement("metric.foo", 0.1, "second")
+        subject.set_measurement("metric.bar", 1.0, "minute")
+        subject.set_measurement("metric.baz", 1.0)
+
+        expect(subject.measurements).to eq(
+          {
+            "metric.foo" => { value: 0.1, unit: "second" },
+            "metric.bar" => { value: 1.0, unit: "minute" },
+            "metric.baz" => { value: 1.0, unit: "" },
+          }
+        )
+
+        subject.set_measurement("metric.foo", 2, "second")
+
+        expect(subject.measurements).to eq(
+          {
+            "metric.foo" => { value: 2, unit: "second" },
+            "metric.bar" => { value: 1.0, unit: "minute" },
+            "metric.baz" => { value: 1.0, unit: "" },
+          }
+        )
+      end
+    end
+  end
+
   describe "#start_child" do
     it "initializes a new child Span and assigns the 'transaction' attribute with itself" do
       # create subject span and wait for a sec for making time difference

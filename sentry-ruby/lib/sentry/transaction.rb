@@ -22,6 +22,10 @@ module Sentry
     # @return [String]
     attr_reader :parent_sampled
 
+    # The measurements added to the transaction.
+    # @return [Hash]
+    attr_reader :measurements
+
     # @deprecated Use Sentry.get_current_hub instead.
     attr_reader :hub
 
@@ -40,9 +44,11 @@ module Sentry
       @hub = hub
       @configuration = hub.configuration # to be removed
       @tracing_enabled = hub.configuration.tracing_enabled?
+      @custom_measurements_enabled = hub.configuration.experiments.custom_measurements
       @traces_sampler = hub.configuration.traces_sampler
       @traces_sample_rate = hub.configuration.traces_sample_rate
       @logger = hub.configuration.logger
+      @measurements = {}
       init_span_recorder
     end
 
@@ -92,6 +98,20 @@ module Sentry
       end
 
       copy
+    end
+
+    # Sets a custom measurement on the transaction.
+    # @param name [String] name of the measurement
+    # @param value [Float] value of the measurement
+    # @param unit [String] unit of the measurement
+    # @return [void]
+    def set_measurement(name, value, unit = "")
+      unless @custom_measurements_enabled
+        log_debug("[Tracing] Experimental custom_measurements feature is disabled")
+        return
+      end
+
+      @measurements[name] = { value: value, unit: unit }
     end
 
     # Sets initial sampling decision of the transaction.
