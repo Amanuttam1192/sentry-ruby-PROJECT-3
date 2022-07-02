@@ -453,5 +453,31 @@ RSpec.describe Sentry::Transaction do
         expect(subject.name).to eq("<unlabeled transaction>")
       end
     end
+
+    context "config.experiments.custom_measurements = true" do
+      before do
+        Sentry.configuration.experiments.custom_measurements = true
+      end
+
+      it "adds measurements the event" do
+        subject.set_measurement("metric.foo", 0.5, "second")
+        subject.finish
+
+        transaction = events.last.to_hash
+        expect(transaction[:measurements]).to eq(
+          { "metric.foo" => { value: 0.5, unit: "second" } }
+        )
+      end
+    end
+
+    context "config.experiments.custom_measurements = false" do
+      it "adds measurements the event" do
+        subject.set_measurement("metric.foo", 0.5, "second")
+        subject.finish
+
+        transaction = events.last.to_hash
+        expect(transaction[:measurements]).to eq(nil)
+      end
+    end
   end
 end

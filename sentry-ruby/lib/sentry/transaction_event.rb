@@ -8,6 +8,9 @@ module Sentry
     # @return [<Array[Span]>]
     attr_accessor :spans
 
+    # @return [Hash]
+    attr_accessor :measurements
+
     # @return [Float, nil]
     attr_reader :start_timestamp
 
@@ -23,6 +26,7 @@ module Sentry
       data = super
       data[:spans] = @spans.map(&:to_hash) if @spans
       data[:start_timestamp] = @start_timestamp
+      data[:measurements] = @measurements
       data
     end
   end
